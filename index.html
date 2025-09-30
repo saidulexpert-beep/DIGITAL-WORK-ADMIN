@@ -1,0 +1,1629 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GMAIL SHOP - Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .sidebar { background-color: #111827; color: #d1d5db; }
+        .sidebar a { border-left: 3px solid transparent; transition: all 0.2s; }
+        .sidebar a:hover { background-color: #374151; }
+        .sidebar a.active { background-color: #4f46e5; color: white; border-left-color: #818cf8; }
+        .stat-card { background-color: white; border-radius: 0.75rem; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); }
+        .page { display: none; }
+        .page.active { display: block; animation: fadeIn 0.5s; }
+        .btn { padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 600; transition: all 0.2s; cursor: pointer; border: none; }
+        .btn:active { transform: scale(0.95); }
+        .btn:disabled { background-color: #9ca3af; cursor: not-allowed; }
+        .btn-primary { background-color: #4f46e5; color: white; }
+        .btn-primary:hover { background-color: #4338ca; }
+        .btn-success { background-color: #10b981; color: white; }
+        .btn-danger { background-color: #ef4444; color: white; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #e5e7eb; word-break: break-word; }
+        th { background-color: #f9fafb; font-weight: 600; }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(4px); }
+        .modal-content { background-color: white; padding: 1.5rem; border-radius: 0.5rem; max-width: 90%; width: 700px; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div id="admin-login-view" class="min-h-screen flex items-center justify-center bg-gray-100">
+        <div class="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
+            <h1 class="text-3xl font-bold text-center text-gray-900">GMAIL SHOP - Admin Login</h1>
+            <input id="admin-email" type="email" placeholder="Admin Email" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+            <input id="admin-password" type="password" placeholder="Password" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+            <button id="admin-login-btn" class="w-full btn btn-primary">Login</button>
+        </div>
+    </div>
+
+    <div id="admin-dashboard" class="hidden">
+        <div class="flex h-screen">
+            <aside class="sidebar w-64 flex-shrink-0">
+                <div class="p-4 text-2xl font-bold text-white">GMAIL SHOP</div>
+                <nav class="mt-8">
+                    <a href="#" class="nav-link block py-3 px-4" data-page="dashboard-page"><i data-lucide="layout-dashboard" class="inline-block w-5 h-5 mr-2"></i>Dashboard</a>
+                    <a href="#" class="nav-link block py-3 px-4" data-page="users-page"><i data-lucide="users" class="inline-block w-5 h-5 mr-2"></i>Users</a>
+                    <a href="#" class="nav-link block py-3 px-4" data-page="transactions-page"><i data-lucide="receipt" class="inline-block w-5 h-5 mr-2"></i>Transactions</a>
+                    <a href="#" class="nav-link block py-3 px-4" data-page="deposits-page"><i data-lucide="arrow-down-circle" class="inline-block w-5 h-5 mr-2"></i>Deposits</a>
+                    <a href="#" class="nav-link block py-3 px-4" data-page="withdrawals-page"><i data-lucide="arrow-up-circle" class="inline-block w-5 h-5 mr-2"></i>Withdrawals</a>
+                    <a href="#" class="nav-link block py-3 px-4" data-page="sell-requests-page"><i data-lucide="tag" class="inline-block w-5 h-5 mr-2"></i>Sell Requests</a>
+                    <a href="#" class="nav-link block py-3 px-4" data-page="tasks-page"><i data-lucide="list-checks" class="inline-block w-5 h-5 mr-2"></i>Tasks</a>
+                    <a href="#" class="nav-link block py-3 px-4" data-page="mail-stock-page"><i data-lucide="mail" class="inline-block w-5 h-5 mr-2"></i>Mail Stock</a>
+                    <a href="#" class="nav-link block py-3 px-4" data-page="updates-page"><i data-lucide="megaphone" class="inline-block w-5 h-5 mr-2"></i>Manage Updates</a>
+                    <a href="#" class="nav-link block py-3 px-4" data-page="settings-page"><i data-lucide="settings" class="inline-block w-5 h-5 mr-2"></i>Settings</a>
+                    <a href="#" id="admin-logout-btn" class="block py-3 px-4 mt-8 text-red-400 hover:bg-red-500 hover:text-white"><i data-lucide="log-out" class="inline-block w-5 h-5 mr-2"></i>Logout</a>
+                </nav>
+            </aside>
+
+            <main class="flex-1 p-8 overflow-y-auto bg-gray-100">
+                <div id="dashboard-page" class="page">
+                    <h1 class="text-3xl font-bold mb-6 text-gray-800">Dashboard</h1>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="stat-card p-6"><h2 class="text-gray-500 text-lg">Total Users</h2><p id="total-users" class="text-4xl font-bold mt-2 text-indigo-600">0</p></div>
+                        <div class="stat-card p-6"><h2 class="text-gray-500 text-lg">Total Approved Deposits</h2><p id="total-deposits-amount" class="text-4xl font-bold mt-2 text-green-600">৳0</p></div>
+                        <div class="stat-card p-6"><h2 class="text-gray-500 text-lg">Total Sell Revenue</h2><p id="total-revenue" class="text-4xl font-bold mt-2 text-sky-600">৳0</p></div>
+                        <div class="stat-card p-6"><h2 class="text-gray-500 text-lg">Pending Requests</h2>
+                            <div class="mt-2 text-lg space-y-1">
+                                <p>Deposits: <span id="pending-deposits" class="font-bold text-yellow-600">0</span></p>
+                                <p>Withdrawals: <span id="pending-withdrawals" class="font-bold text-orange-600">0</span></p>
+                                <p>Sells: <span id="pending-sells" class="font-bold text-blue-600">0</span></p>
+                                <p>Tasks: <span id="pending-tasks" class="font-bold text-purple-600">0</span></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-8 stat-card p-6">
+                        <h2 class="text-xl font-bold mb-4 text-gray-700">New User Registrations (Last 7 Days)</h2>
+                        <canvas id="user-chart"></canvas>
+                    </div>
+                </div>
+
+                <div id="users-page" class="page">
+                    <h1 class="text-3xl font-bold mb-6 text-gray-800">User Management</h1>
+                    <div class="mb-4"><input type="text" id="user-search" class="w-full max-w-sm px-4 py-2 border rounded-lg" placeholder="Search by name or email..."></div>
+                    <div class="bg-white shadow-md rounded-lg overflow-x-auto">
+                        <table class="min-w-full">
+                            <thead><tr><th>Name</th><th>Email</th><th>Balance</th><th>Activation</th><th>Status</th><th>Actions</th></tr></thead>
+                            <tbody id="users-table-body"></tbody>
+                        </table>
+                    </div>
+                    <div id="user-pagination" class="mt-4 flex justify-end space-x-2">
+                        <button id="prev-page-btn" class="btn bg-gray-300">Previous</button>
+                        <button id="next-page-btn" class="btn bg-gray-300">Next</button>
+                    </div>
+                </div>
+                
+                <div id="transactions-page" class="page">
+                    <h1 class="text-3xl font-bold mb-6 text-gray-800">All Transactions</h1>
+                    <div class="mb-4 flex items-center space-x-4">
+                        <label for="transaction-filter">Filter by Type:</label>
+                        <select id="transaction-filter" class="px-4 py-2 border rounded-lg">
+                            <option value="all">All Transactions</option>
+                            <option value="deposit">Deposit</option>
+                            <option value="withdrawal">Withdrawal</option>
+                            <option value="task_reward">Task Reward</option>
+                            <option value="sell">Account Sell</option>
+                            <option value="transfer">Balance Transfer</option>
+                            <option value="admin">Admin Adjustment</option>
+                        </select>
+                    </div>
+                    <div class="bg-white shadow-md rounded-lg overflow-x-auto">
+                        <table class="min-w-full">
+                            <thead><tr><th>Date</th><th>User</th><th>Type</th><th>Details</th><th>Amount</th></tr></thead>
+                            <tbody id="transactions-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="deposits-page" class="page">
+                     <h1 class="text-3xl font-bold mb-6 text-gray-800">Pending Deposit Requests</h1>
+                     <div class="bg-white shadow-md rounded-lg overflow-x-auto">
+                        <table>
+                            <thead><tr><th>User Name</th><th>Amount (BDT)</th><th>Method</th><th>Sender No.</th><th>TrxID</th><th>Time</th><th>Actions</th></tr></thead>
+                            <tbody id="deposits-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="withdrawals-page" class="page">
+                    <h1 class="text-3xl font-bold mb-6 text-gray-800">Pending Withdrawal Requests</h1>
+                    <div class="bg-white shadow-md rounded-lg overflow-x-auto">
+                       <table>
+                           <thead><tr><th>User Name</th><th>Request Amount</th><th>Payment Details</th><th>Time</th><th>Actions</th></tr></thead>
+                           <tbody id="withdrawals-table-body"></tbody>
+                       </table>
+                   </div>
+               </div>
+
+                <div id="sell-requests-page" class="page">
+                    <div class="flex justify-between items-center mb-6">
+                        <h1 class="text-3xl font-bold text-gray-800">Sell Requests</h1>
+                        <button id="download-sell-requests-btn" class="btn btn-success flex items-center space-x-2">
+                            <i data-lucide="download" class="w-4 h-4"></i>
+                            <span>Download</span>
+                        </button>
+                    </div>
+                    <div class="flex flex-wrap gap-4 mb-4">
+                        <div>
+                            <p class="text-sm font-semibold mb-2">Filter by Status:</p>
+                            <div class="flex space-x-2" id="sell-request-status-filter-btns">
+                                <button class="btn btn-primary" data-status="pending">Pending</button>
+                                <button class="btn bg-gray-300" data-status="approved">Approved</button>
+                                <button class="btn bg-gray-300" data-status="rejected">Rejected</button>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold mb-2">Filter by Account Type:</p>
+                            <div class="flex space-x-2 flex-wrap gap-2" id="sell-request-type-filter-btns">
+                                </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card p-6 my-6">
+                        <h2 class="text-xl font-bold mb-2 text-gray-700">Batch Actions by Account Identifier</h2>
+                        <p class="text-sm text-gray-500 mb-4">
+                            এখানে প্রতি লাইনে একটি করে অ্যাকাউন্ট আইডেন্টিফায়ার (যেমন ইমেইল) পেস্ট করুন। তারপর তালিকা অনুযায়ী একসাথে Approve বা Reject করুন।
+                        </p>
+                        <textarea id="batch-action-textarea" class="w-full p-2 border rounded-md font-mono text-sm" rows="8" placeholder="example1@gmail.com&#10;example2@gmail.com&#10;..."></textarea>
+                        <div class="mt-4 flex space-x-4">
+                            <button id="approve-by-list-btn" class="btn btn-success">Approve by List</button>
+                            <button id="reject-by-list-btn" class="btn btn-danger">Reject by List</button>
+                        </div>
+                    </div>
+                    
+                     <div class="bg-white shadow-md rounded-lg overflow-x-auto">
+                        <table>
+                            <thead><tr><th>User Name</th><th>Price (BDT)</th><th>Account Type</th><th>Details</th><th>Time</th><th>Status</th><th>Actions</th></tr></thead>
+                            <tbody id="sell-requests-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="tasks-page" class="page">
+                    <h1 class="text-3xl font-bold mb-6 text-gray-800">Task Management</h1>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-1">
+                            <div class="stat-card p-6">
+                                <h2 class="text-xl font-bold mb-4" id="task-form-title">Create New Task</h2>
+                                <form id="task-form" class="space-y-4">
+                                    <input type="hidden" id="task-id">
+                                    <div><label class="block font-semibold">Title</label><input type="text" id="task-title" class="w-full px-3 py-2 border rounded" required></div>
+                                    <div><label class="block font-semibold">Description</label><textarea id="task-description" rows="3" class="w-full px-3 py-2 border rounded"></textarea></div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div><label class="block font-semibold">Reward (BDT)</label><input type="number" id="task-reward" step="0.01" class="w-full px-3 py-2 border rounded" required></div>
+                                        <div><label class="block font-semibold">Duration (sec)</label><input type="number" id="task-duration" class="w-full px-3 py-2 border rounded" placeholder="e.g., 100" required></div>
+                                    </div>
+                                    <div><label class="block font-semibold">Video URL</label><input type="url" id="task-videoUrl" class="w-full px-3 py-2 border rounded" placeholder="https://youtube.com/watch?v=..."></div>
+                                    <div><label class="block font-semibold">Correct Code</label><input type="text" id="task-code" class="w-full px-3 py-2 border rounded" required></div>
+                                    <div class="flex items-center space-x-2 pt-2">
+                                        <input type="checkbox" id="task-isActive" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" checked>
+                                        <label for="task-isActive" class="font-semibold">Is Active (Visible to users)</label>
+                                    </div>
+                                    <div class="flex space-x-2">
+                                        <button type="submit" id="task-submit-btn" class="w-full btn btn-primary">Create Task</button>
+                                        <button type="button" id="task-cancel-btn" class="w-full btn bg-gray-300 hidden">Cancel</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="lg:col-span-2">
+                            <div class="stat-card p-6 mb-6">
+                                <h2 class="text-xl font-bold mb-4">Current Active Tasks</h2>
+                                <div id="active-tasks-list" class="space-y-2"></div>
+                            </div>
+                            <div class="stat-card p-6">
+                                <h2 class="text-xl font-bold mb-4">Pending Task Submissions</h2>
+                                <div class="overflow-x-auto">
+                                    <table>
+                                        <thead><tr><th>User Name</th><th>Task Title</th><th>Submitted Code</th><th>Reward</th><th>Actions</th></tr></thead>
+                                        <tbody id="task-submissions-table-body"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div id="mail-stock-page" class="page">
+                    <h1 class="text-3xl font-bold mb-6 text-gray-800">Mail Stock Management</h1>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="stat-card p-6">
+                            <h2 class="text-xl font-bold mb-4">Add Mails</h2>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block font-semibold">Mail Type</label>
+                                    <select id="mail-type-to-add" class="w-full px-3 py-2 border rounded"></select>
+                                </div>
+                                <div>
+                                    <label class="block font-semibold">Mails</label>
+                                    <textarea id="mails-to-add" rows="8" class="w-full px-3 py-2 border rounded font-mono text-sm" placeholder="One per line. Format:&#10;email|password|refresh_token|client_id"></textarea>
+                                </div>
+                                <button id="add-mails-btn" class="w-full btn btn-primary">Add to Stock</button>
+                            </div>
+                        </div>
+                         <div id="mail-stock-display" class="stat-card p-6">
+                            <h2 class="text-xl font-bold mb-4">Current Stock</h2>
+                            <div id="mail-stock-list" class="space-y-3"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="updates-page" class="page">
+                    <h1 class="text-3xl font-bold mb-6 text-gray-800">Manage Updates</h1>
+                     <div class="stat-card p-6">
+                        <h2 class="text-xl font-bold mb-4" id="update-form-title">Add New Update</h2>
+                        <form id="update-form" class="space-y-4">
+                            <input type="hidden" id="update-id">
+                            <div><label class="block font-semibold">Title</label><input type="text" id="update-title" class="w-full px-3 py-2 border rounded" required></div>
+                            <div><label class="block font-semibold">Content / Message</label><textarea id="update-content" rows="4" class="w-full px-3 py-2 border rounded"></textarea></div>
+                            <div><label class="block font-semibold">Image URL</label><input type="text" id="update-imageUrl" class="w-full px-3 py-2 border rounded" required></div>
+                            <div><label class="block font-semibold">Link URL (Optional)</label><input type="text" id="update-linkUrl" class="w-full px-3 py-2 border rounded" placeholder="https://example.com/more-info"></div>
+                            <div class="flex space-x-2">
+                                <button type="submit" id="update-submit-btn" class="w-full btn btn-primary">Post Update</button>
+                                <button type="button" id="update-cancel-btn" class="w-full btn bg-gray-300 hidden">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="bg-white shadow-md rounded-lg overflow-x-auto mt-8">
+                        <h2 class="text-xl font-bold p-4">Current Updates</h2>
+                        <table>
+                            <thead><tr><th>Title</th><th>Posted On</th><th>Link</th><th>Likes</th><th>Dislikes</th><th>Actions</th></tr></thead>
+                            <tbody id="updates-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="settings-page" class="page">
+                    <h1 class="text-3xl font-bold mb-6 text-gray-800">App Settings</h1>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="space-y-8">
+                            <div class="stat-card p-6">
+                                <h2 class="text-xl font-bold mb-4">General Settings</h2>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label for="activation-fee" class="block font-semibold">Account Activation Fee (BDT)</label>
+                                        <input type="number" id="activation-fee" class="w-full p-2 border rounded-md" placeholder="e.g., 50">
+                                    </div>
+                                    <div>
+                                        <label for="referral-bonus" class="block font-semibold">Referral Bonus (BDT)</label>
+                                        <input type="number" id="referral-bonus" class="w-full p-2 border rounded-md" placeholder="e.g., 10">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="stat-card p-6">
+                                <h2 class="text-xl font-bold mb-4">Mail Purchase Settings</h2>
+                                <div id="mail-settings-container"></div>
+                            </div>
+                             <div class="stat-card p-6 space-y-4 h-fit">
+                                 <h2 class="text-xl font-bold">Add New Mail Type</h2>
+                                 <div>
+                                    <label class="block font-semibold mb-1">Mail Type Name</label>
+                                    <input type="text" id="new-mail-type-name" class="w-full px-4 py-2 border rounded-lg" placeholder="e.g., Yahoo Mail">
+                                 </div>
+                                 <div>
+                                    <label class="block font-semibold mb-1">Stock Key (Unique ID)</label>
+                                    <input type="text" id="new-mail-stock-key" class="w-full px-4 py-2 border rounded-lg" placeholder="e.g., yahoo_stock">
+                                    <p class="text-xs text-gray-500 mt-1">No spaces. This is the collection name in DB.</p>
+                                 </div>
+                                 <button id="add-new-mail-type-btn" class="btn btn-success w-full">Add Mail Type</button>
+                            </div>
+                        </div>
+
+                        <div class="stat-card p-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <h2 class="text-xl font-bold">Sellable Items Settings</h2>
+                                <button id="add-sellable-item-btn" class="btn btn-primary">Add New Item</button>
+                            </div>
+                            <div id="sellable-items-container" class="space-y-4">
+                                </div>
+                        </div>
+                    </div>
+                    <div class="mt-8">
+                        <button id="save-all-settings-btn" class="w-full lg:w-auto btn btn-primary px-8 py-3 text-lg">Save All Settings</button>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <div id="history-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h2 id="history-modal-title" class="text-xl font-bold">Transaction History</h2>
+                <button id="history-modal-close" class="p-2 text-2xl font-bold leading-none">&times;</button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead><tr><th>Date</th><th>Type</th><th>Details</th><th>Amount (BDT)</th></tr></thead>
+                    <tbody id="history-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div id="balance-modal" class="modal-overlay hidden">
+        <div class="modal-content !w-[500px]">
+            <h2 id="balance-modal-title" class="text-2xl font-bold mb-6">Update Balance</h2>
+            <form id="balance-form" class="space-y-4">
+                <input type="hidden" id="balance-user-id">
+                <p class="text-lg">Current Balance: <span id="current-balance-display" class="font-bold"></span></p>
+                <div>
+                    <label class="block font-semibold">Action</label>
+                    <select id="balance-action" class="w-full p-2 border rounded">
+                        <option value="add">Add to Balance</option>
+                        <option value="deduct">Deduct from Balance</option>
+                        <option value="set">Set New Balance</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-semibold">Amount (BDT)</label>
+                    <input type="number" id="balance-amount" step="0.01" class="w-full p-2 border rounded" required>
+                </div>
+                <div>
+                    <label class="block font-semibold">Reason (Optional)</label>
+                    <input type="text" id="balance-reason" class="w-full p-2 border rounded" placeholder="e.g., Bonus for contest winner">
+                </div>
+                <div class="flex justify-end space-x-4 pt-4">
+                    <button type="button" id="balance-modal-cancel" class="btn bg-gray-300">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Balance</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="sell-item-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2 id="sell-item-modal-title" class="text-2xl font-bold mb-6">Add Sellable Item</h2>
+            <form id="sell-item-form" class="space-y-4">
+                <input type="hidden" id="sell-item-index">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div><label class="block font-semibold">Type</label><input type="text" id="sell-item-type" placeholder="e.g., FACEBOOK" class="w-full p-2 border rounded"></div>
+                    <div><label class="block font-semibold">Details</label><input type="text" id="sell-item-details" placeholder="e.g., CL Account" class="w-full p-2 border rounded"></div>
+                    <div><label class="block font-semibold">Price (BDT)</label><input type="number" id="sell-item-price" class="w-full p-2 border rounded"></div>
+                    <div><label class="block font-semibold">Report Text</label><input type="text" id="sell-item-reportText" placeholder="e.g., Guaranteed" class="w-full p-2 border rounded"></div>
+                    <div><label class="block font-semibold">Availability Text</label><input type="text" id="sell-item-availabilityText" placeholder="e.g., Available" class="w-full p-2 border rounded"></div>
+                </div>
+                <div>
+                    <label class="block font-semibold">Logo URL</label>
+                    <input type="text" id="sell-item-logoUrl" placeholder="https://example.com/image.png" class="w-full p-2 border rounded">
+                </div>
+                <div>
+                    <label class="block font-semibold">Required Fields (JSON Format)</label>
+                    <textarea id="sell-item-fields" rows="8" class="w-full p-2 border rounded font-mono text-sm" placeholder="Enter as a JSON array..."></textarea>
+                    <p class="text-xs text-gray-500 mt-1">Example: [{"name": "Email", "placeholder": "Enter account email"}, {"name": "Password", "placeholder": "Enter password"}]</p>
+                </div>
+                <div class="flex items-center space-x-2 pt-2">
+                    <input type="checkbox" id="sell-item-isEnabled" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                    <label for="sell-item-isEnabled" class="font-semibold">Is Enabled (Visible to users)</label>
+                </div>
+                <div class="flex justify-end space-x-4 pt-4">
+                    <button type="button" id="sell-item-modal-cancel" class="btn bg-gray-300">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Item</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div id="mail-stock-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h2 id="mail-stock-modal-title" class="text-xl font-bold">Manage Stock</h2>
+                <button id="mail-stock-modal-close" class="p-2 text-2xl font-bold leading-none">&times;</button>
+            </div>
+            <div class="mb-4">
+                <button id="delete-selected-mails-btn" class="btn btn-danger">Delete Selected</button>
+            </div>
+            <div class="overflow-auto max-h-[60vh]">
+                <table class="min-w-full">
+                    <thead>
+                        <tr>
+                            <th class="w-10"><input type="checkbox" id="select-all-mails-checkbox"></th>
+                            <th>Email</th>
+                            <th>Password</th>
+                            <th>Sold Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="mail-stock-modal-table-body">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="custom-alert" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"><div class="bg-white rounded-lg p-6 w-full max-w-sm text-center shadow-xl"><p id="alert-message" class="mb-4 text-gray-800"></p><button id="alert-ok-btn" class="btn btn-primary px-6">OK</button></div></div>
+    <div id="custom-confirm" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"><div class="bg-white rounded-lg p-6 w-full max-w-sm text-center shadow-xl"><p id="confirm-message" class="mb-6 text-gray-800"></p><div class="flex justify-center space-x-4"><button id="confirm-cancel-btn" class="btn bg-gray-300 text-gray-800 px-6">Cancel</button><button id="confirm-ok-btn" class="btn btn-danger px-6">Confirm</button></div></div></div>
+    
+    <script type="module">
+const firebaseConfig = {
+  apiKey: "AIzaSyCEPKLp_o_Cm01Tt_Yl2YEBXSdy_3gd128",
+  authDomain: "digital-work-job-e39c7.firebaseapp.com",
+  databaseURL: "https://digital-work-job-e39c7-default-rtdb.firebaseio.com",
+  projectId: "digital-work-job-e39c7",
+  storageBucket: "digital-work-job-e39c7.firebasestorage.app",
+  messagingSenderId: "1003757829039",
+  appId: "1:1003757829039:web:0592ccbc932d92d0310d5a"
+};
+        
+        // IMPORTANT: Replace with your actual Firebase Admin User UID(s)
+        const ADMIN_UIDS = ["pT1AZ4KM9GOT3JLn8CESy8ZZFEp1"];
+
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getFirestore, collection, doc, getDoc, setDoc, updateDoc, query, where, onSnapshot, addDoc, serverTimestamp, deleteDoc, writeBatch, getDocs, runTransaction, orderBy, limit, startAfter, endBefore, limitToLast, getCountFromServer, increment } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const loginView = document.getElementById('admin-login-view');
+        const dashboardView = document.getElementById('admin-dashboard');
+        let appConfig = {};
+        let tasksCache = new Map();
+        
+        let lastVisibleUser = null;
+        let firstVisibleUser = null;
+        const USERS_PER_PAGE = 10;
+        let userChart = null;
+
+        window.onload = () => {
+            lucide.createIcons();
+            setupEventListeners();
+            onAuthStateChanged(auth, (user) => {
+                if (user && ADMIN_UIDS.includes(user.uid)) {
+                    loginView.style.display = 'none';
+                    dashboardView.style.display = 'block';
+                    navigateTo('dashboard-page');
+                } else {
+                    if (user) signOut(auth);
+                    loginView.style.display = 'flex';
+                    dashboardView.style.display = 'none';
+                }
+            });
+        };
+        
+        async function fetchAppConfig() {
+            const configRef = doc(db, "config", "main");
+            const docSnap = await getDoc(configRef);
+            appConfig = docSnap.exists() ? docSnap.data() : { mails: [], sellableItems: [], activationFee: 50, referralBonus: 10 };
+            if (!appConfig.mails) appConfig.mails = [];
+            if (!appConfig.sellableItems) appConfig.sellableItems = [];
+            return appConfig;
+        }
+
+        function navigateTo(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId)?.classList.add('active');
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.toggle('active', link.dataset.page === pageId);
+            });
+            
+            const pageFunctions = {
+                'dashboard-page': loadDashboardData,
+                'users-page': () => loadUsers('first'),
+                'transactions-page': loadTransactions,
+                'deposits-page': loadDeposits,
+                'withdrawals-page': loadWithdrawals,
+                'sell-requests-page': setupSellRequestFilters,
+                'tasks-page': loadTasksPage,
+                'mail-stock-page': loadMailStockPage,
+                'updates-page': loadUpdates,
+                'settings-page': loadSettings,
+            };
+            pageFunctions[pageId]?.();
+        }
+
+        function setupEventListeners() {
+            document.getElementById('admin-login-btn').addEventListener('click', handleAdminLogin);
+            document.getElementById('admin-logout-btn').addEventListener('click', () => signOut(auth));
+            document.getElementById('add-mails-btn').addEventListener('click', handleAddMails);
+            document.getElementById('user-search').addEventListener('input', filterUsers);
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', (e) => { e.preventDefault(); navigateTo(link.dataset.page); });
+            });
+            document.getElementById('sell-request-status-filter-btns').addEventListener('click', (e) => {
+                if (e.target.tagName === 'BUTTON') {
+                    document.querySelectorAll('#sell-request-status-filter-btns button').forEach(btn => btn.classList.replace('btn-primary', 'bg-gray-300'));
+                    e.target.classList.replace('bg-gray-300', 'btn-primary');
+                    loadSellRequests();
+                }
+            });
+            document.getElementById('sell-request-type-filter-btns').addEventListener('click', (e) => {
+                if (e.target.tagName === 'BUTTON') {
+                    document.querySelectorAll('#sell-request-type-filter-btns button').forEach(btn => btn.classList.replace('btn-primary', 'bg-gray-300'));
+                    e.target.classList.replace('bg-gray-300', 'btn-primary');
+                    loadSellRequests();
+                }
+            });
+            document.getElementById('download-sell-requests-btn').addEventListener('click', handleDownloadSellRequests);
+            document.getElementById('next-page-btn').addEventListener('click', () => loadUsers('next'));
+            document.getElementById('prev-page-btn').addEventListener('click', () => loadUsers('prev'));
+            document.getElementById('history-modal-close').addEventListener('click', () => document.getElementById('history-modal').classList.add('hidden'));
+            document.getElementById('update-form').addEventListener('submit', handleUpdateSubmit);
+            document.getElementById('update-cancel-btn').addEventListener('click', resetUpdateForm);
+            document.getElementById('save-all-settings-btn').addEventListener('click', saveAllSettings);
+            document.getElementById('add-new-mail-type-btn').addEventListener('click', handleAddNewMailType);
+            document.getElementById('add-sellable-item-btn').addEventListener('click', () => openSellItemModal());
+            document.getElementById('sell-item-modal-cancel').addEventListener('click', () => document.getElementById('sell-item-modal').classList.add('hidden'));
+            document.getElementById('sell-item-form').addEventListener('submit', handleSellItemFormSubmit);
+            document.getElementById('balance-modal-cancel').addEventListener('click', () => document.getElementById('balance-modal').classList.add('hidden'));
+            document.getElementById('balance-form').addEventListener('submit', handleBalanceUpdate);
+            document.getElementById('transaction-filter').addEventListener('change', loadTransactions);
+            document.getElementById('mail-stock-modal-close').addEventListener('click', () => document.getElementById('mail-stock-modal').classList.add('hidden'));
+            document.getElementById('approve-by-list-btn').addEventListener('click', () => handleBatchAction('approve'));
+            document.getElementById('reject-by-list-btn').addEventListener('click', () => handleBatchAction('reject'));
+            document.getElementById('task-form').addEventListener('submit', handleTaskFormSubmit);
+            document.getElementById('task-cancel-btn').addEventListener('click', resetTaskForm);
+        }
+
+        async function handleAdminLogin() {
+            const email = document.getElementById('admin-email').value;
+            const password = document.getElementById('admin-password').value;
+            if(!email || !password) return showAlert('Please enter email and password.');
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                if (!ADMIN_UIDS.includes(userCredential.user.uid)) {
+                    await signOut(auth);
+                    showAlert("You are not authorized to access this panel.");
+                }
+            } catch (error) { showAlert("Login failed: " + error.message); }
+        }
+        
+        async function loadDashboardData() {
+            onSnapshot(collection(db, "users"), snap => { document.getElementById('total-users').textContent = snap.size; });
+            onSnapshot(query(collection(db, "deposits"), where("status", "==", "pending")), snap => { document.getElementById('pending-deposits').textContent = snap.size; });
+            onSnapshot(query(collection(db, "withdrawals"), where("status", "==", "pending")), snap => { document.getElementById('pending-withdrawals').textContent = snap.size; });
+            onSnapshot(query(collection(db, "sell_requests"), where("status", "==", "pending")), snap => { document.getElementById('pending-sells').textContent = snap.size; });
+            onSnapshot(query(collection(db, "taskSubmissions"), where("status", "==", "pending")), snap => { document.getElementById('pending-tasks').textContent = snap.size; });
+
+            const approvedDepositsQuery = query(collection(db, "deposits"), where("status", "==", "approved"));
+            onSnapshot(approvedDepositsQuery, (snap) => {
+                const total = snap.docs.reduce((sum, doc) => sum + doc.data().amount, 0);
+                document.getElementById('total-deposits-amount').textContent = `৳${total.toLocaleString()}`;
+            });
+
+            const approvedSellsQuery = query(collection(db, "sell_requests"), where("status", "==", "approved"));
+             onSnapshot(approvedSellsQuery, (snap) => {
+                const total = snap.docs.reduce((sum, doc) => sum + doc.data().askingPrice, 0);
+                document.getElementById('total-revenue').textContent = `৳${total.toLocaleString()}`;
+            });
+            
+            loadDashboardChart();
+        }
+        
+        async function loadDashboardChart() {
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            const q = query(collection(db, "users"), where("createdAt", ">=", sevenDaysAgo));
+            const snapshot = await getDocs(q);
+            const dailyCounts = {};
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(); d.setDate(d.getDate() - i);
+                dailyCounts[d.toISOString().split('T')[0]] = 0;
+            }
+            snapshot.forEach(doc => {
+                const regDate = doc.data().createdAt?.toDate().toISOString().split('T')[0];
+                if (dailyCounts[regDate] !== undefined) dailyCounts[regDate]++;
+            });
+            const labels = Object.keys(dailyCounts).sort();
+            const data = labels.map(label => dailyCounts[label]);
+            const ctx = document.getElementById('user-chart').getContext('2d');
+            if(userChart) userChart.destroy();
+            userChart = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ label: 'New Users', data, borderColor: '#4f46e5', backgroundColor: 'rgba(79, 70, 229, 0.1)', fill: true, tension: 0.3 }] }, options: { scales: { y: { beginAtZero: true, stepSize: 1 } } } });
+        }
+
+        async function loadUsers(direction) {
+            const tableBody = document.getElementById('users-table-body');
+            tableBody.innerHTML = `<tr><td colspan="6" class="text-center">Loading...</td></tr>`;
+            let q;
+            const usersRef = collection(db, "users");
+            if (direction === 'first' || !direction) {
+                q = query(usersRef, orderBy("createdAt", "desc"), limit(USERS_PER_PAGE));
+            } else if (direction === 'next' && lastVisibleUser) {
+                q = query(usersRef, orderBy("createdAt", "desc"), startAfter(lastVisibleUser), limit(USERS_PER_PAGE));
+            } else if (direction === 'prev' && firstVisibleUser) {
+                q = query(usersRef, orderBy("createdAt", "desc"), endBefore(firstVisibleUser), limitToLast(USERS_PER_PAGE));
+            } else { return; }
+            const snapshot = await getDocs(q);
+            if (!snapshot.empty) {
+                lastVisibleUser = snapshot.docs[snapshot.docs.length - 1];
+                firstVisibleUser = snapshot.docs[0];
+            }
+            document.getElementById('next-page-btn').disabled = snapshot.size < USERS_PER_PAGE && direction !== 'prev';
+            document.getElementById('prev-page-btn').disabled = direction === 'first' || !direction || !firstVisibleUser;
+            renderUsers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        }
+
+        async function filterUsers(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            if (!searchTerm) { loadUsers('first'); return; }
+            const nameQuery = query(collection(db, "users"), where("name", ">=", searchTerm), where("name", "<=", searchTerm + '\uf8ff'));
+            const emailQuery = query(collection(db, "users"), where("email", ">=", searchTerm), where("email", "<=", searchTerm + '\uf8ff'));
+            const [nameSnapshot, emailSnapshot] = await Promise.all([getDocs(nameQuery), getDocs(emailQuery)]);
+            const usersMap = new Map();
+            nameSnapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() }));
+            emailSnapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() }));
+            renderUsers(Array.from(usersMap.values()));
+            document.getElementById('user-pagination').classList.add('hidden');
+        }
+
+        function renderUsers(users) {
+            if (document.getElementById('user-search').value === '') {
+                document.getElementById('user-pagination').classList.remove('hidden');
+            }
+            const tableBody = document.getElementById('users-table-body');
+            if (users.length === 0) { tableBody.innerHTML = `<tr><td colspan="6" class="text-center">No users found.</td></tr>`; return; }
+            tableBody.innerHTML = users.map(user => {
+                const isBlocked = user.isBlocked || false;
+                const isActivated = user.isActivated || false;
+                const userDataString = JSON.stringify({ id: user.id, name: user.name || user.email, balance: user.balance || 0 }).replace(/"/g, "'");
+                return `<tr>
+                    <td>${user.name || 'N/A'}</td><td>${user.email}</td><td>৳${(user.balance || 0).toFixed(2)}</td>
+                    <td><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${isActivated ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">${isActivated ? 'Active' : 'Inactive'}</span></td>
+                    <td><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${isBlocked ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}">${isBlocked ? 'Blocked' : 'Active'}</span></td>
+                    <td class="space-x-2 whitespace-nowrap">
+                        <button class="btn text-xs ${isBlocked ? 'btn-success' : 'btn-danger'}" onclick="window.toggleBlockUser('${user.id}', ${isBlocked})">${isBlocked ? 'Unblock' : 'Block'}</button>
+                        <button class="btn text-xs ${isActivated ? 'btn-danger' : 'btn-success'}" onclick="window.toggleActivation('${user.id}', ${isActivated})">${isActivated ? 'Deactivate' : 'Activate'}</button>
+                        <button class="btn text-xs btn-primary" onclick="window.openBalanceModal(${userDataString})">Balance</button>
+                        <button class="btn text-xs bg-gray-600 text-white" onclick="window.showUserHistory('${user.id}', '${user.name || user.email}')">History</button>
+                    </td></tr>`;
+            }).join('');
+        }
+
+        window.toggleBlockUser = (userId, isBlocked) => {
+            const action = isBlocked ? 'unblock' : 'block';
+            showConfirm(`Are you sure you want to ${action} this user?`, async () => {
+                await updateDoc(doc(db, "users", userId), { isBlocked: !isBlocked });
+                showAlert(`User successfully ${action}ed.`);
+                filterUsers({ target: document.getElementById('user-search') });
+            });
+        };
+        
+        window.toggleActivation = (userId, isActivated) => {
+            const action = isActivated ? 'deactivate' : 'activate';
+            showConfirm(`Are you sure you want to ${action} this user's account?`, async () => {
+                await updateDoc(doc(db, "users", userId), { isActivated: !isActivated });
+                showAlert(`User account successfully ${action}d.`);
+                filterUsers({ target: document.getElementById('user-search') });
+            });
+        };
+
+        window.openBalanceModal = (userData) => {
+            document.getElementById('balance-user-id').value = userData.id;
+            document.getElementById('balance-modal-title').textContent = `Update Balance for ${userData.name}`;
+            document.getElementById('current-balance-display').textContent = `৳${userData.balance.toFixed(2)}`;
+            document.getElementById('balance-form').reset();
+            document.getElementById('balance-modal').classList.remove('hidden');
+        };
+
+        async function handleBalanceUpdate(e) {
+            e.preventDefault();
+            const userId = document.getElementById('balance-user-id').value;
+            const action = document.getElementById('balance-action').value;
+            const amount = parseFloat(document.getElementById('balance-amount').value);
+            const reason = document.getElementById('balance-reason').value.trim();
+
+            if (isNaN(amount) || amount < 0) {
+                showAlert("Please enter a valid, non-negative amount.");
+                return;
+            }
+
+            const userRef = doc(db, "users", userId);
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const userDoc = await transaction.get(userRef);
+                    if (!userDoc.exists()) throw new Error("User not found.");
+                    
+                    const currentBalance = userDoc.data().balance || 0;
+                    let newBalance;
+                    let logType;
+
+                    if (action === 'add') {
+                        newBalance = currentBalance + amount;
+                        logType = 'Admin Credit';
+                    } else if (action === 'deduct') {
+                        newBalance = currentBalance - amount;
+                        if (newBalance < 0) throw new Error("Deduction results in negative balance.");
+                        logType = 'Admin Debit';
+                    } else { // set
+                        newBalance = amount;
+                        logType = 'Admin Set Balance';
+                    }
+                    
+                    transaction.update(userRef, { balance: newBalance });
+
+                    const logRef = doc(collection(db, "users", userId, "balance_logs"));
+                    transaction.set(logRef, {
+                        amount: action === 'deduct' ? -amount : (action === 'add' ? amount : newBalance - currentBalance),
+                        type: logType,
+                        reason: reason || "Admin action",
+                        timestamp: serverTimestamp()
+                    });
+                });
+                
+                showAlert("User balance updated successfully.");
+                document.getElementById('balance-modal').classList.add('hidden');
+                filterUsers({ target: document.getElementById('user-search') });
+
+            } catch (error) {
+                showAlert("Failed to update balance: " + error.message);
+            }
+        }
+        
+        window.showUserHistory = async (userId, userName) => {
+            const modal = document.getElementById('history-modal');
+            const tableBody = document.getElementById('history-table-body');
+            document.getElementById('history-modal-title').textContent = `History for ${userName}`;
+            tableBody.innerHTML = `<tr><td colspan="4" class="text-center">Loading history...</td></tr>`;
+            modal.classList.remove('hidden');
+            
+            let allHistory = await fetchAllTransactionsForUser(userId);
+            
+            if (allHistory.length === 0) { tableBody.innerHTML = `<tr><td colspan="4" class="text-center">No transactions found.</td></tr>`; return; }
+            
+            tableBody.innerHTML = allHistory.map(item => `
+                <tr>
+                    <td class="text-sm text-gray-600">${item.date.toLocaleString()}</td>
+                    <td>${item.type}</td>
+                    <td>${item.details}</td>
+                    <td class="font-semibold ${item.amount > 0 ? 'text-green-600' : 'text-red-600'}">${item.amount > 0 ? '+' : ''}৳${item.amount.toFixed(2)}</td>
+                </tr>`).join('');
+        };
+        
+        async function loadTransactions() {
+            const tableBody = document.getElementById('transactions-table-body');
+            const filter = document.getElementById('transaction-filter').value;
+            tableBody.innerHTML = `<tr><td colspan="5" class="text-center">Loading transactions...</td></tr>`;
+            
+            let transactions = [];
+            const usersMap = new Map();
+            const usersSnapshot = await getDocs(collection(db, "users"));
+            usersSnapshot.forEach(doc => usersMap.set(doc.id, doc.data().name || doc.data().email));
+
+            if (filter === 'all' || filter === 'deposit') {
+                const snapshot = await getDocs(query(collection(db, "deposits"), where("status", "==", "approved")));
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    transactions.push({ date: data.requestedAt.toDate(), user: usersMap.get(data.userId) || data.userId, type: 'Deposit', details: `Via ${data.method}`, amount: data.amount });
+                });
+            }
+            if (filter === 'all' || filter === 'withdrawal') {
+                const snapshot = await getDocs(query(collection(db, "withdrawals"), where("status", "==", "approved")));
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    transactions.push({ date: data.requestedAt.toDate(), user: usersMap.get(data.userId) || data.userId, type: 'Withdrawal', details: `To ${data.walletType}`, amount: -data.amount });
+                });
+            }
+            if (filter === 'all' || filter === 'task_reward') {
+                const snapshot = await getDocs(query(collection(db, "taskSubmissions"), where("status", "==", "approved")));
+                 snapshot.forEach(doc => {
+                    const data = doc.data();
+                    transactions.push({ date: data.submittedAt.toDate(), user: usersMap.get(data.userId) || data.userId, type: 'Task Reward', details: `Task ID: ${data.taskId.substring(0,8)}...`, amount: data.reward });
+                });
+            }
+            if (filter === 'all' || filter === 'sell') {
+                const snapshot = await getDocs(query(collection(db, "sell_requests"), where("status", "==", "approved")));
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    transactions.push({ date: data.requestedAt.toDate(), user: usersMap.get(data.userId) || data.userId, type: 'Account Sell', details: data.accountType, amount: data.askingPrice });
+                });
+            }
+            if (filter === 'all' || filter === 'transfer') {
+                const sentSnapshot = await getDocs(collection(db, "transfers"));
+                sentSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    transactions.push({ date: data.timestamp.toDate(), user: usersMap.get(data.fromId) || data.fromId, type: 'Transfer Sent', details: `To: ${data.toName}`, amount: -data.amount });
+                    transactions.push({ date: data.timestamp.toDate(), user: usersMap.get(data.toId) || data.toId, type: 'Transfer Received', details: `From: ${data.fromName}`, amount: data.amount });
+                });
+            }
+
+            transactions.sort((a, b) => b.date - a.date);
+
+            if (transactions.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="5" class="text-center">No transactions found for this filter.</td></tr>`;
+                return;
+            }
+
+            tableBody.innerHTML = transactions.map(t => `
+                <tr>
+                    <td class="text-sm text-gray-500">${t.date.toLocaleString()}</td>
+                    <td>${t.user}</td>
+                    <td>${t.type}</td>
+                    <td class="text-sm">${t.details}</td>
+                    <td class="font-semibold ${t.amount > 0 ? 'text-green-600' : 'text-red-600'}">${t.amount > 0 ? '+' : ''}৳${t.amount.toFixed(2)}</td>
+                </tr>
+            `).join('');
+        }
+        
+        async function fetchAllTransactionsForUser(userId) {
+            let history = [];
+            const [depositsSnap, sellsSnap, taskSubsSnap, withdrawsSnap, sentTransfersSnap, receivedTransfersSnap, balanceLogsSnap] = await Promise.all([
+                getDocs(query(collection(db, "deposits"), where("userId", "==", userId), where("status", "==", "approved"))),
+                getDocs(query(collection(db, "sell_requests"), where("userId", "==", userId), where("status", "==", "approved"))),
+                getDocs(query(collection(db, "taskSubmissions"), where("userId", "==", userId), where("status", "==", "approved"))),
+                getDocs(query(collection(db, "withdrawals"), where("userId", "==", userId))),
+                getDocs(query(collection(db, "transfers"), where("fromId", "==", userId))),
+                getDocs(query(collection(db, "transfers"), where("toId", "==", userId))),
+                getDocs(query(collection(db, "users", userId, "balance_logs")))
+            ]);
+
+            depositsSnap.forEach(doc => history.push({ date: doc.data().requestedAt.toDate(), type: 'Deposit', details: `Via ${doc.data().method}`, amount: doc.data().amount }));
+            sellsSnap.forEach(doc => history.push({ date: doc.data().requestedAt.toDate(), type: 'Account Sold', details: doc.data().accountType, amount: doc.data().askingPrice }));
+            taskSubsSnap.forEach(doc => history.push({ date: doc.data().submittedAt.toDate(), type: 'Task Reward', details: `Task ID: ${doc.data().taskId.substring(0,8)}...`, amount: doc.data().reward }));
+            withdrawsSnap.forEach(doc => {
+                const details = doc.data().status === 'approved' ? 'Approved' : doc.data().status === 'rejected' ? 'Rejected' : 'Pending';
+                history.push({ date: doc.data().requestedAt.toDate(), type: `Withdrawal (${details})`, details: `To ${doc.data().walletType}`, amount: -doc.data().amount });
+            });
+            sentTransfersSnap.forEach(doc => history.push({ date: doc.data().timestamp.toDate(), type: 'Balance Sent', details: `To ${doc.data().toName}`, amount: -doc.data().amount }));
+            receivedTransfersSnap.forEach(doc => history.push({ date: doc.data().timestamp.toDate(), type: 'Balance Received', details: `From ${doc.data().fromName}`, amount: doc.data().amount }));
+            balanceLogsSnap.forEach(doc => history.push({ date: doc.data().timestamp.toDate(), type: doc.data().type, details: doc.data().reason, amount: doc.data().amount }));
+
+            return history.sort((a, b) => b.date - a.date);
+        }
+
+        function loadDeposits() {
+            const tableBody = document.getElementById('deposits-table-body');
+            tableBody.innerHTML = `<tr><td colspan="7" class="text-center">Loading...</td></tr>`;
+            const q = query(collection(db, "deposits"), where("status", "==", "pending"));
+            onSnapshot(q, (snapshot) => {
+                if (snapshot.empty) { tableBody.innerHTML = `<tr><td colspan="7" class="text-center">No pending deposits.</td></tr>`; return; }
+                tableBody.innerHTML = snapshot.docs.map(docSnap => {
+                    const req = docSnap.data();
+                    return `<tr>
+                        <td>${req.userName || 'N/A'}</td><td>৳${req.amount}</td><td>${req.method}</td>
+                        <td>${req.senderNumber}</td><td>${req.transactionId}</td>
+                        <td>${req.requestedAt?.toDate().toLocaleString() || 'N/A'}</td>
+                        <td class="space-x-2">
+                            <button class="btn btn-success text-xs" onclick="window.handleDeposit('${docSnap.id}', '${req.userId}', ${req.amount}, 'approved')">Approve</button>
+                            <button class="btn btn-danger text-xs" onclick="window.handleDeposit('${docSnap.id}', null, 0, 'rejected')">Reject</button>
+                        </td></tr>`;
+                }).join('');
+            });
+        }
+        
+        window.handleDeposit = (depositId, userId, amount, newStatus) => {
+            showConfirm(`Are you sure you want to ${newStatus} this ৳${amount} deposit?`, async () => {
+                const depositRef = doc(db, "deposits", depositId);
+                const userRef = userId ? doc(db, "users", userId) : null;
+                try {
+                    await runTransaction(db, async (transaction) => {
+                        if (newStatus === 'approved' && userRef) {
+                            transaction.update(userRef, { balance: increment(amount) });
+                        }
+                        transaction.update(depositRef, { status: newStatus });
+                    });
+                    showAlert(`Deposit has been ${newStatus}.`);
+                } catch (e) { showAlert("Operation failed: " + e.message); }
+            });
+        };
+
+        function loadWithdrawals() {
+            const tableBody = document.getElementById('withdrawals-table-body');
+            tableBody.innerHTML = `<tr><td colspan="5" class="text-center">Loading...</td></tr>`;
+            const q = query(collection(db, "withdrawals"), where("status", "==", "pending"));
+            onSnapshot(q, (snapshot) => {
+                if (snapshot.empty) { tableBody.innerHTML = `<tr><td colspan="5" class="text-center">No pending withdrawals.</td></tr>`; return; }
+                tableBody.innerHTML = snapshot.docs.map(docSnap => {
+                    const req = docSnap.data();
+                    const detailsHtml = `
+                        <div class="text-xs">
+                            <p><strong>Name:</strong> ${req.holderName || 'N/A'}</p>
+                            <p><strong>Method:</strong> ${req.walletType || 'N/A'}</p>
+                            <p><strong>Number:</strong> ${req.accountNumber || 'N/A'}</p>
+                        </div>
+                    `;
+                    return `<tr>
+                        <td>${req.userName || 'N/A'}</td>
+                        <td class="font-bold text-lg">৳${req.amount.toFixed(2)}</td>
+                        <td>${detailsHtml}</td>
+                        <td>${req.requestedAt?.toDate().toLocaleString() || 'N/A'}</td>
+                        <td class="space-x-2">
+                            <button class="btn btn-success text-xs" onclick="window.handleWithdrawal('${docSnap.id}', '${req.userId}', ${req.amount}, 'approved')">Approve</button>
+                            <button class="btn btn-danger text-xs" onclick="window.handleWithdrawal('${docSnap.id}', '${req.userId}', ${req.amount}, 'rejected')">Reject</button>
+                        </td></tr>`;
+                }).join('');
+            });
+        }
+
+        window.handleWithdrawal = (withdrawalId, userId, amount, newStatus) => {
+            const actionText = newStatus === 'rejected' ? `reject this request and refund ৳${amount} to the user` : `${newStatus} this withdrawal request`;
+            showConfirm(`Are you sure you want to ${actionText}?`, async () => {
+                const withdrawalRef = doc(db, "withdrawals", withdrawalId);
+                const userRef = userId ? doc(db, "users", userId) : null;
+                try {
+                    await runTransaction(db, async (transaction) => {
+                        if (newStatus === 'rejected' && userRef) {
+                            transaction.update(userRef, { balance: increment(amount) });
+                        }
+                        transaction.update(withdrawalRef, { status: newStatus });
+                    });
+                    showAlert(`Withdrawal has been ${newStatus}.`);
+                } catch (e) { showAlert("Operation failed: " + e.message); }
+            });
+        };
+        
+        function loadSellRequests() {
+            const tableBody = document.getElementById('sell-requests-table-body');
+            tableBody.innerHTML = `<tr><td colspan="7" class="text-center">Loading...</td></tr>`;
+
+            const activeStatus = document.querySelector('#sell-request-status-filter-btns .btn-primary').dataset.status;
+            const activeType = document.querySelector('#sell-request-type-filter-btns .btn-primary')?.dataset.type || 'all';
+
+            let constraints = [where("status", "==", activeStatus)];
+            if (activeType !== 'all') {
+                constraints.push(where("accountType", "==", activeType));
+            }
+            constraints.push(orderBy("requestedAt", "desc"));
+
+            const q = query(collection(db, "sell_requests"), ...constraints);
+            
+            onSnapshot(q, (snapshot) => {
+                if (snapshot.empty) { tableBody.innerHTML = `<tr><td colspan="7" class="text-center">No requests found for the selected filters.</td></tr>`; return; }
+                tableBody.innerHTML = snapshot.docs.map(docSnap => {
+                    const req = docSnap.data();
+                    const detailsHtml = Object.entries(req.accountDetails)
+                        .map(([key, value]) => value ? `<div><strong class="text-gray-600">${key}:</strong> ${value}</div>` : '')
+                        .join('');
+                    const escapedAccountType = req.accountType.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+                    return `<tr>
+                        <td>${req.userName || 'N/A'}</td><td>৳${req.askingPrice.toFixed(2)}</td>
+                        <td>${req.accountType}</td><td class="text-xs">${detailsHtml}</td>
+                        <td>${req.requestedAt?.toDate().toLocaleString() || 'N/A'}</td>
+                        <td><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full capitalize ${req.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : req.status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${req.status}</span></td>
+                        <td class="space-x-2">${req.status === 'pending' ? `<button class="btn btn-success text-xs" onclick="window.handleSellRequest('${docSnap.id}', '${req.userId}', ${req.askingPrice}, 'approved', '${escapedAccountType}')">Approve</button><button class="btn btn-danger text-xs" onclick="window.handleSellRequest('${docSnap.id}', null, 0, 'rejected', '${escapedAccountType}')">Reject</button>` : 'N/A'}</td>
+                    </tr>`;
+                }).join('');
+            });
+        }
+        
+        async function handleDownloadSellRequests() {
+            const activeButton = document.querySelector('#sell-request-status-filter-btns button.btn-primary');
+            const status = activeButton ? activeButton.dataset.status : 'pending';
+            showAlert(`Preparing to download '${status}' sell requests...`);
+            try {
+                const sellRequestsQuery = query(collection(db, "sell_requests"), where("status", "==", status), orderBy("requestedAt", "desc"));
+                const snapshot = await getDocs(sellRequestsQuery);
+                if (snapshot.empty) { showAlert(`No '${status}' sell requests found to download.`); return; }
+                const dataForExcel = snapshot.docs.map(doc => {
+                    const req = doc.data();
+                    return {
+                        'Request Date': req.requestedAt?.toDate().toLocaleString('en-GB') || 'N/A', 'User Name': req.userName, 'User ID': req.userId,
+                        'Account Type': req.accountType, 'Asking Price (BDT)': req.askingPrice, 'Status': req.status, 'Account Details': JSON.stringify(req.accountDetails)
+                    };
+                });
+                const worksheet = XLSX.utils.json_to_sheet(dataForExcel);
+                worksheet['!cols'] = [ { wch: 20 }, { wch: 25 }, { wch: 30 }, { wch: 20 }, { wch: 18 }, { wch: 12 }, { wch: 80 } ];
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "Sell Requests");
+                const fileName = `Sell_Requests_${status.charAt(0).toUpperCase() + status.slice(1)}_${new Date().toISOString().split('T')[0]}.xlsx`;
+                XLSX.writeFile(workbook, fileName);
+            } catch (error) {
+                console.error("Error downloading sell requests:", error);
+                showAlert("An error occurred while preparing the download.");
+            }
+        }
+
+        window.handleSellRequest = (requestId, userId, amount, newStatus, accountType) => {
+            showConfirm(`Are you sure you want to ${newStatus} this sell request?`, async () => {
+                const requestRef = doc(db, "sell_requests", requestId);
+                const userRef = userId ? doc(db, "users", userId) : null;
+                try {
+                    await runTransaction(db, async (transaction) => {
+                        if (newStatus === 'approved' && userRef) {
+                             transaction.update(userRef, { balance: increment(amount) });
+                        }
+                        transaction.update(requestRef, { status: newStatus });
+                    });
+                    showAlert(`Request has been ${newStatus}.`);
+                } catch (e) { showAlert("Operation failed: " + e.message); }
+            });
+        };
+        
+        // --- NEW TASKS FUNCTIONS ---
+        async function loadTasksPage() {
+            loadActiveTasks();
+            loadTaskSubmissions();
+        }
+
+        function loadActiveTasks() {
+            const listContainer = document.getElementById('active-tasks-list');
+            const q = query(collection(db, "tasks"), where("isActive", "==", true), orderBy("createdAt", "desc"));
+            onSnapshot(q, (snapshot) => {
+                tasksCache.clear();
+                if(snapshot.empty) { listContainer.innerHTML = `<p class="text-gray-500">No active tasks.</p>`; return; }
+                listContainer.innerHTML = snapshot.docs.map(doc => {
+                    const task = {id: doc.id, ...doc.data()};
+                    tasksCache.set(task.id, task);
+                    return `<div class="p-3 bg-gray-50 rounded-md flex justify-between items-center">
+                        <div>
+                            <p class="font-semibold">${task.title}</p>
+                            <p class="text-xs text-gray-600">Reward: ৳${task.reward}</p>
+                        </div>
+                        <div class="space-x-2">
+                            <button class="btn text-xs btn-primary" onclick='window.editTask(${JSON.stringify(task)})'>Edit</button>
+                            <button class="btn text-xs btn-danger" onclick="window.deleteTask('${task.id}')">Delete</button>
+                        </div>
+                    </div>`;
+                }).join('');
+            });
+        }
+        
+        async function loadTaskSubmissions() {
+            const tableBody = document.getElementById('task-submissions-table-body');
+            const q = query(collection(db, "taskSubmissions"), where("status", "==", "pending"), orderBy("submittedAt", "desc"));
+            
+            // Pre-fetch all tasks to avoid multiple reads inside the loop
+            if (tasksCache.size === 0) {
+                const tasksSnapshot = await getDocs(collection(db, "tasks"));
+                tasksSnapshot.forEach(doc => tasksCache.set(doc.id, {id: doc.id, ...doc.data()}));
+            }
+
+            onSnapshot(q, (snapshot) => {
+                if(snapshot.empty) { tableBody.innerHTML = `<tr><td colspan="5" class="text-center">No pending submissions.</td></tr>`; return; }
+                tableBody.innerHTML = snapshot.docs.map(doc => {
+                    const sub = {id: doc.id, ...doc.data()};
+                    const task = tasksCache.get(sub.taskId);
+                    return `<tr>
+                        <td>${sub.userName || 'N/A'}</td>
+                        <td class="text-sm">${task ? task.title : 'Unknown Task'}</td>
+                        <td class="font-mono">${sub.submittedCode}</td>
+                        <td class="font-semibold text-green-600">৳${sub.reward}</td>
+                        <td class="space-x-2">
+                            <button class="btn btn-success text-xs" onclick="window.handleTaskSubmission('${sub.id}', '${sub.userId}', ${sub.reward}, 'approved')">Approve</button>
+                            <button class="btn btn-danger text-xs" onclick="window.handleTaskSubmission('${sub.id}', null, 0, 'rejected')">Reject</button>
+                        </td>
+                    </tr>`;
+                }).join('');
+            });
+        }
+        
+        window.handleTaskSubmission = (subId, userId, reward, newStatus) => {
+            showConfirm(`Are you sure you want to ${newStatus} this submission?`, async () => {
+                const subRef = doc(db, "taskSubmissions", subId);
+                const userRef = userId ? doc(db, "users", userId) : null;
+                 try {
+                    await runTransaction(db, async (transaction) => {
+                        if (newStatus === 'approved' && userRef) {
+                            transaction.update(userRef, { balance: increment(reward) });
+                        }
+                        transaction.update(subRef, { status: newStatus });
+                    });
+                    showAlert(`Submission has been ${newStatus}.`);
+                } catch (e) { showAlert("Operation failed: " + e.message); }
+            });
+        };
+
+        async function handleTaskFormSubmit(e) {
+            e.preventDefault();
+            const taskId = document.getElementById('task-id').value;
+            const taskData = {
+                title: document.getElementById('task-title').value,
+                description: document.getElementById('task-description').value,
+                reward: parseFloat(document.getElementById('task-reward').value),
+                duration: parseInt(document.getElementById('task-duration').value),
+                videoUrl: document.getElementById('task-videoUrl').value,
+                code: document.getElementById('task-code').value.toUpperCase(),
+                isActive: document.getElementById('task-isActive').checked,
+            };
+            if (!taskData.title || !taskData.reward || !taskData.duration || !taskData.code) {
+                return showAlert("Please fill all required fields.");
+            }
+
+            if (taskId) {
+                await updateDoc(doc(db, "tasks", taskId), taskData);
+                showAlert("Task updated successfully!");
+            } else {
+                await addDoc(collection(db, "tasks"), { ...taskData, createdAt: serverTimestamp() });
+                showAlert("New task created successfully!");
+            }
+            resetTaskForm();
+        }
+        
+        window.editTask = (task) => {
+            document.getElementById('task-id').value = task.id;
+            document.getElementById('task-title').value = task.title;
+            document.getElementById('task-description').value = task.description || '';
+            document.getElementById('task-reward').value = task.reward;
+            document.getElementById('task-duration').value = task.duration;
+            document.getElementById('task-videoUrl').value = task.videoUrl || '';
+            document.getElementById('task-code').value = task.code;
+            document.getElementById('task-isActive').checked = task.isActive;
+            document.getElementById('task-form-title').textContent = 'Edit Task';
+            document.getElementById('task-submit-btn').textContent = 'Save Changes';
+            document.getElementById('task-cancel-btn').classList.remove('hidden');
+        };
+
+        window.deleteTask = (taskId) => {
+            showConfirm("Delete this task permanently? This will not affect past submissions.", async () => {
+                await deleteDoc(doc(db, "tasks", taskId));
+                showAlert("Task deleted.");
+            });
+        };
+
+        function resetTaskForm() {
+            document.getElementById('task-form').reset();
+            document.getElementById('task-id').value = '';
+            document.getElementById('task-form-title').textContent = 'Create New Task';
+            document.getElementById('task-submit-btn').textContent = 'Create Task';
+            document.getElementById('task-cancel-btn').classList.add('hidden');
+            document.getElementById('task-isActive').checked = true;
+        }
+
+        // --- END TASKS FUNCTIONS ---
+
+        async function loadMailStockPage() {
+            await fetchAppConfig();
+            const mailTypes = appConfig.mails || [];
+            const select = document.getElementById('mail-type-to-add');
+            const stockList = document.getElementById('mail-stock-list');
+            select.innerHTML = '';
+            stockList.innerHTML = 'Loading stock...';
+            if (mailTypes.length === 0) {
+                 select.innerHTML = '<option>No mail types configured</option>';
+                stockList.innerHTML = '<p>No mail types configured. Add them in Settings.</p>'; return;
+            }
+            stockList.innerHTML = '';
+            mailTypes.forEach(mail => {
+                select.innerHTML += `<option value="${mail.stockKey}">${mail.type}</option>`;
+                stockList.innerHTML += `<div class="flex justify-between items-center p-3 bg-gray-50 rounded">
+                    <div>
+                        <span class="font-semibold">Available ${mail.type}:</span>
+                        <span id="${mail.stockKey}-stock" class="font-bold text-lg">...</span>
+                    </div>
+                    <button class="btn btn-primary text-xs" onclick="window.openMailStockManager('${mail.stockKey}', '${mail.type}')">Manage</button>
+                </div>`;
+                onSnapshot(query(collection(db, mail.stockKey), where("isSold", "==", false)), snap => { 
+                    const stockEl = document.getElementById(`${mail.stockKey}-stock`);
+                    if(stockEl) stockEl.textContent = snap.size;
+                });
+            });
+        }
+
+        async function handleAddMails() {
+            const stockKey = document.getElementById('mail-type-to-add').value;
+            const mailsText = document.getElementById('mails-to-add').value.trim();
+            if (!stockKey || !mailsText) return showAlert("Please select a type and enter mails.");
+            const lines = mailsText.split('\n').filter(Boolean);
+            const batch = writeBatch(db);
+            let count = 0;
+            lines.forEach(line => {
+                const parts = line.split('|').map(p => p.trim());
+                if (parts.length === 4 && parts[0] && parts[1]) {
+                    const [email, password, refresh_token, client_id] = parts;
+                    batch.set(doc(collection(db, stockKey)), { email, password, refresh_token, client_id, isSold: false, createdAt: serverTimestamp() });
+                    count++;
+                }
+            });
+            if (count > 0) {
+                await batch.commit();
+                showAlert(`${count} mails added successfully!`);
+                document.getElementById('mails-to-add').value = '';
+            } else { showAlert("No valid mails found. Use format: email|password|refresh_token|client_id"); }
+        }
+
+        function loadUpdates() {
+            const tableBody = document.getElementById('updates-table-body');
+            onSnapshot(query(collection(db, "updates"), orderBy("createdAt", "desc")), (snapshot) => {
+                if(snapshot.empty) { tableBody.innerHTML = `<tr><td colspan="6" class="text-center">No updates posted yet.</td></tr>`; return; }
+                tableBody.innerHTML = snapshot.docs.map(doc => {
+                    const update = {id: doc.id, ...doc.data()};
+                    const linkDisplay = update.linkUrl 
+                        ? `<a href="${update.linkUrl}" target="_blank" class="text-blue-600 hover:underline text-xs" title="${update.linkUrl}">${update.linkUrl.substring(0, 25)}...</a>`
+                        : `<span class="text-gray-400">N/A</span>`;
+
+                    return `<tr>
+                        <td>${update.title}</td>
+                        <td>${update.createdAt?.toDate().toLocaleDateString() || 'N/A'}</td>
+                        <td>${linkDisplay}</td>
+                        <td class="text-green-600 font-semibold">${update.likes || 0}</td>
+                        <td class="text-red-600 font-semibold">${update.dislikes || 0}</td>
+                        <td class="space-x-2">
+                            <button class="btn text-xs btn-primary" onclick='window.editUpdate(${JSON.stringify(update).replace(/'/g, "&apos;")})'>Edit</button>
+                            <button class="btn text-xs btn-danger" onclick="window.deleteUpdate('${update.id}')">Delete</button>
+                        </td></tr>`;
+                }).join('');
+            });
+        }
+
+        async function handleUpdateSubmit(e) {
+            e.preventDefault();
+            const updateId = document.getElementById('update-id').value;
+            const updateData = {
+                title: document.getElementById('update-title').value,
+                content: document.getElementById('update-content').value,
+                imageUrl: document.getElementById('update-imageUrl').value,
+                linkUrl: document.getElementById('update-linkUrl').value.trim() || null,
+            };
+            if (!updateData.title || !updateData.imageUrl) return showAlert("Title and Image URL are required.");
+
+            if (updateId) {
+                await updateDoc(doc(db, "updates", updateId), updateData);
+                showAlert("Update modified successfully!");
+            } else {
+                await addDoc(collection(db, "updates"), { ...updateData, likes: 0, dislikes: 0, createdAt: serverTimestamp() });
+                showAlert("New update posted successfully!");
+            }
+            resetUpdateForm();
+        }
+
+        window.editUpdate = (update) => {
+            document.getElementById('update-id').value = update.id;
+            document.getElementById('update-title').value = update.title;
+            document.getElementById('update-content').value = update.content;
+            document.getElementById('update-imageUrl').value = update.imageUrl;
+            document.getElementById('update-linkUrl').value = update.linkUrl || '';
+            document.getElementById('update-form-title').textContent = 'Edit Update';
+            document.getElementById('update-submit-btn').textContent = 'Save Changes';
+            document.getElementById('update-cancel-btn').classList.remove('hidden');
+        };
+
+        window.deleteUpdate = (updateId) => {
+            showConfirm("Delete this update permanently?", async () => {
+                await deleteDoc(doc(db, "updates", updateId));
+                showAlert("Update deleted.");
+            });
+        };
+
+        function resetUpdateForm() {
+            document.getElementById('update-form').reset();
+            document.getElementById('update-id').value = '';
+            document.getElementById('update-form-title').textContent = 'Add New Update';
+            document.getElementById('update-submit-btn').textContent = 'Post Update';
+            document.getElementById('update-cancel-btn').classList.add('hidden');
+        }
+
+        async function loadSettings() {
+            await fetchAppConfig();
+            document.getElementById('activation-fee').value = appConfig.activationFee || 50;
+            document.getElementById('referral-bonus').value = appConfig.referralBonus || 10;
+            renderMailSettings();
+            renderSellableItems();
+            lucide.createIcons();
+        }
+        
+        function renderMailSettings() {
+            const container = document.getElementById('mail-settings-container');
+            container.innerHTML = '';
+            (appConfig.mails || []).forEach(mail => {
+                container.innerHTML += `
+                <div class="p-4 border rounded-lg mb-4 bg-gray-50 mail-setting-item" data-stock-key="${mail.stockKey}">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-lg font-bold">${mail.type}</h3>
+                        <button class="btn btn-danger p-2" onclick="window.deleteMailType('${mail.stockKey}')"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </div>
+                    <div class="space-y-3">
+                         <div>
+                            <label class="block font-semibold text-sm mb-1">Price (BDT)</label>
+                            <input type="number" class="w-full p-2 border rounded-md" value="${mail.priceBdt || 0}" data-field="priceBdt">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-sm mb-1">Logo URL</label>
+                            <input type="text" class="w-full p-2 border rounded-md" value="${mail.logoUrl || ''}" data-field="logoUrl" placeholder="https://example.com/logo.png">
+                        </div>
+                    </div>
+                </div>`;
+            });
+            lucide.createIcons();
+        }
+
+        function renderSellableItems() {
+            const container = document.getElementById('sellable-items-container');
+            container.innerHTML = '';
+            (appConfig.sellableItems || []).forEach((item, index) => {
+                const isEnabled = item.isEnabled === true;
+                container.innerHTML += `
+                <div class="p-4 border rounded-lg bg-gray-50">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-md">${item.type} <span class="text-gray-500 font-normal">(${item.details})</span></h4>
+                            <p class="text-green-600 font-semibold">Price: ৳${item.price}</p>
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${isEnabled ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${isEnabled ? 'Enabled' : 'Disabled'}</span>
+                        </div>
+                        <div class="space-x-2">
+                             <button class="btn btn-primary p-2" onclick="window.openSellItemModal(${index})"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                             <button class="btn btn-danger p-2" onclick="window.deleteSellableItem(${index})"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            lucide.createIcons();
+        }
+
+        async function handleAddNewMailType() {
+            const typeName = document.getElementById('new-mail-type-name').value.trim();
+            const stockKey = document.getElementById('new-mail-stock-key').value.trim();
+            if (!typeName || !stockKey || /\s/.test(stockKey)) return showAlert("Please fill all fields correctly. Stock Key cannot have spaces.");
+            if (appConfig.mails.some(m => m.stockKey === stockKey || m.type === typeName)) return showAlert(`A mail type with this name or stock key already exists.`);
+            
+            appConfig.mails.push({ type: typeName, stockKey, priceBdt: 0, logoUrl: '' });
+            renderMailSettings();
+            showAlert("New mail type added. Don't forget to Save All Settings.");
+            document.getElementById('new-mail-type-name').value = '';
+            document.getElementById('new-mail-stock-key').value = '';
+        }
+
+        window.deleteMailType = (stockKey) => {
+            showConfirm("Delete this mail type? This cannot be undone.", () => {
+                appConfig.mails = appConfig.mails.filter(m => m.stockKey !== stockKey);
+                renderMailSettings();
+                showAlert("Mail type removed. Don't forget to Save All Settings.");
+            });
+        };
+
+        window.openSellItemModal = (index = null) => {
+            const modal = document.getElementById('sell-item-modal');
+            const form = document.getElementById('sell-item-form');
+            form.reset();
+            const title = document.getElementById('sell-item-modal-title');
+            document.getElementById('sell-item-index').value = index !== null ? index : '';
+
+            if (index !== null) {
+                title.textContent = 'Edit Sellable Item';
+                const item = appConfig.sellableItems[index];
+                document.getElementById('sell-item-type').value = item.type;
+                document.getElementById('sell-item-details').value = item.details;
+                document.getElementById('sell-item-price').value = item.price;
+                document.getElementById('sell-item-logoUrl').value = item.logoUrl || '';
+                document.getElementById('sell-item-reportText').value = item.reportText || '';
+                document.getElementById('sell-item-availabilityText').value = item.availabilityText || '';
+                document.getElementById('sell-item-fields').value = JSON.stringify(item.fields, null, 2);
+                document.getElementById('sell-item-isEnabled').checked = item.isEnabled === true;
+            } else {
+                title.textContent = 'Add Sellable Item';
+                document.getElementById('sell-item-isEnabled').checked = true;
+            }
+            modal.classList.remove('hidden');
+        };
+
+        window.deleteSellableItem = (index) => {
+            showConfirm("Delete this sellable item?", () => {
+                appConfig.sellableItems.splice(index, 1);
+                renderSellableItems();
+                showAlert("Item removed. Don't forget to Save All Settings.");
+            });
+        };
+
+        function handleSellItemFormSubmit(e) {
+            e.preventDefault();
+            const index = document.getElementById('sell-item-index').value;
+            let fieldsArray;
+            try {
+                const fieldsText = document.getElementById('sell-item-fields').value;
+                fieldsArray = fieldsText ? JSON.parse(fieldsText) : [];
+                if (!Array.isArray(fieldsArray)) throw new Error();
+            } catch {
+                showAlert("Invalid JSON format for Required Fields."); return;
+            }
+
+            const newItem = {
+                type: document.getElementById('sell-item-type').value.trim(),
+                details: document.getElementById('sell-item-details').value.trim(),
+                price: parseFloat(document.getElementById('sell-item-price').value) || 0,
+                logoUrl: document.getElementById('sell-item-logoUrl').value.trim(),
+                reportText: document.getElementById('sell-item-reportText').value.trim(),
+                availabilityText: document.getElementById('sell-item-availabilityText').value.trim(),
+                fields: fieldsArray,
+                isEnabled: document.getElementById('sell-item-isEnabled').checked
+            };
+
+            if (!newItem.type || !newItem.details) {
+                showAlert("Please fill at least Type and Details fields."); return;
+            }
+
+            if (index && index !== '') {
+                appConfig.sellableItems[parseInt(index)] = newItem;
+            } else {
+                if(!appConfig.sellableItems) appConfig.sellableItems = [];
+                appConfig.sellableItems.push(newItem);
+            }
+            renderSellableItems();
+            document.getElementById('sell-item-modal').classList.add('hidden');
+            showAlert("Sell item saved. Don't forget to Save All Settings.");
+        }
+
+        async function saveAllSettings() {
+            const newMailsArray = [];
+            document.querySelectorAll('.mail-setting-item').forEach(item => {
+                const stockKey = item.dataset.stockKey;
+                const originalMail = appConfig.mails.find(m => m.stockKey === stockKey);
+                newMailsArray.push({
+                    stockKey: stockKey,
+                    type: originalMail.type,
+                    priceBdt: parseFloat(item.querySelector('[data-field="priceBdt"]').value) || 0,
+                    logoUrl: item.querySelector('[data-field="logoUrl"]').value.trim()
+                });
+            });
+            appConfig.mails = newMailsArray;
+            
+            // Save general settings
+            appConfig.activationFee = parseFloat(document.getElementById('activation-fee').value) || 50;
+            appConfig.referralBonus = parseFloat(document.getElementById('referral-bonus').value) || 10;
+            
+            try {
+                if (!Array.isArray(appConfig.sellableItems)) {
+                    appConfig.sellableItems = [];
+                }
+                await setDoc(doc(db, "config", "main"), appConfig);
+                showAlert("All settings have been saved successfully!");
+                loadSettings();
+            } catch (error) {
+                showAlert("Failed to save settings: " + error.message);
+            }
+        }
+        
+        async function setupSellRequestFilters() {
+            await fetchAppConfig();
+            const typeFilterContainer = document.getElementById('sell-request-type-filter-btns');
+            
+            const sellableTypes = [...new Set((appConfig.sellableItems || []).map(item => item.type))];
+
+            let buttonsHtml = '<button class="btn btn-primary" data-type="all">All Types</button>';
+            
+            if(sellableTypes.length > 0){
+                 sellableTypes.forEach(type => {
+                    buttonsHtml += `<button class="btn bg-gray-300" data-type="${type}">${type}</button>`;
+                });
+            }
+           
+            typeFilterContainer.innerHTML = buttonsHtml;
+            
+            loadSellRequests();
+        }
+
+        window.openMailStockManager = async (stockKey, mailType) => {
+            const modal = document.getElementById('mail-stock-modal');
+            const tableBody = document.getElementById('mail-stock-modal-table-body');
+            const title = document.getElementById('mail-stock-modal-title');
+            const deleteBtn = document.getElementById('delete-selected-mails-btn');
+            const selectAllCheckbox = document.getElementById('select-all-mails-checkbox');
+
+            title.textContent = `Manage Stock for ${mailType}`;
+            tableBody.innerHTML = `<tr><td colspan="4" class="text-center">Loading stock...</td></tr>`;
+            modal.classList.remove('hidden');
+
+            const stockSnapshot = await getDocs(query(collection(db, stockKey), orderBy("createdAt", "desc")));
+            
+            if (stockSnapshot.empty) {
+                tableBody.innerHTML = `<tr><td colspan="4" class="text-center">No mails in stock.</td></tr>`;
+                return;
+            }
+
+            tableBody.innerHTML = stockSnapshot.docs.map(doc => {
+                const mail = doc.data();
+                return `
+                    <tr>
+                        <td><input type="checkbox" class="mail-select-checkbox" data-id="${doc.id}"></td>
+                        <td>${mail.email}</td>
+                        <td>${mail.password}</td>
+                        <td><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${mail.isSold ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}">${mail.isSold ? 'Sold' : 'Available'}</span></td>
+                    </tr>`;
+            }).join('');
+
+            selectAllCheckbox.onchange = (e) => {
+                document.querySelectorAll('.mail-select-checkbox').forEach(cb => cb.checked = e.target.checked);
+            };
+
+            deleteBtn.onclick = () => handleDeleteSelectedMails(stockKey);
+        };
+
+        function handleDeleteSelectedMails(stockKey) {
+            const selectedIds = Array.from(document.querySelectorAll('.mail-select-checkbox:checked')).map(cb => cb.dataset.id);
+            if (selectedIds.length === 0) {
+                showAlert("Please select at least one mail to delete.");
+                return;
+            }
+
+            showConfirm(`Are you sure you want to permanently delete ${selectedIds.length} mail(s)? This cannot be undone.`, async () => {
+                const batch = writeBatch(db);
+                selectedIds.forEach(id => {
+                    batch.delete(doc(db, stockKey, id));
+                });
+                try {
+                    await batch.commit();
+                    showAlert(`${selectedIds.length} mail(s) deleted successfully.`);
+                    document.getElementById('mail-stock-modal').classList.add('hidden');
+                    onSnapshot(query(collection(db, stockKey), where("isSold", "==", false)), snap => { 
+                        const stockEl = document.getElementById(`${stockKey}-stock`);
+                        if(stockEl) stockEl.textContent = snap.size;
+                    });
+                } catch (error) {
+                    showAlert("Failed to delete mails: " + error.message);
+                }
+            });
+        }
+        
+        async function handleBatchAction(action) {
+            const textarea = document.getElementById('batch-action-textarea');
+            const identifiers = textarea.value.split('\n').map(id => id.trim()).filter(Boolean);
+            if (identifiers.length === 0) {
+                return showAlert("Please paste at least one account identifier in the text area.");
+            }
+
+            const actionText = action === 'approve' ? 'Approve' : 'Reject';
+            showConfirm(`Are you sure you want to ${actionText} ${identifiers.length} requests from the list?`, async () => {
+                showAlert("Processing batch... Please wait.");
+                document.getElementById('approve-by-list-btn').disabled = true;
+                document.getElementById('reject-by-list-btn').disabled = true;
+
+                let successCount = 0, errorCount = 0;
+                
+                const chunks = [];
+                for (let i = 0; i < identifiers.length; i += 30) {
+                    chunks.push(identifiers.slice(i, i + 30));
+                }
+
+                for (const chunk of chunks) {
+                    const q = query(collection(db, "sell_requests"), where("status", "==", "pending"), where("accountDetails.Email", "in", chunk)); // Assuming 'Email' is a key in accountDetails
+                    const snapshot = await getDocs(q);
+                    const batch = writeBatch(db);
+                    
+                    for (const requestDoc of snapshot.docs) {
+                        const { userId, askingPrice } = requestDoc.data();
+                        
+                        if (action === 'approve') {
+                            batch.update(requestDoc.ref, { status: "approved" });
+                             if (userId && askingPrice) {
+                                batch.update(doc(db, "users", userId), { balance: increment(askingPrice) });
+                            }
+                        } else {
+                            batch.update(requestDoc.ref, { status: "rejected" });
+                        }
+                        successCount++;
+                    }
+                    
+                    try {
+                        await batch.commit();
+                    } catch (e) {
+                        console.error("Batch commit failed for a chunk:", e);
+                        errorCount += chunk.length - snapshot.size;
+                    }
+                }
+
+                showAlert(`Batch Process Complete!\n- Success: ${successCount}\n- Failed/Not Found: ${identifiers.length - successCount}`);
+                document.getElementById('approve-by-list-btn').disabled = false;
+                document.getElementById('reject-by-list-btn').disabled = false;
+                textarea.value = '';
+
+            });
+        }
+
+
+        function showAlert(message) {
+            document.getElementById('alert-message').textContent = message;
+            document.getElementById('custom-alert').classList.remove('hidden');
+            document.getElementById('alert-ok-btn').onclick = () => { document.getElementById('custom-alert').classList.add('hidden'); };
+        }
+
+        function showConfirm(message, onConfirm) {
+            const confirmModal = document.getElementById('custom-confirm');
+            document.getElementById('confirm-message').textContent = message;
+            confirmModal.classList.remove('hidden');
+            const okBtn = document.getElementById('confirm-ok-btn');
+            const cancelBtn = document.getElementById('confirm-cancel-btn');
+            
+            const okListener = () => {
+                onConfirm();
+                cleanup();
+            };
+            const cancelListener = () => cleanup();
+            
+            function cleanup() {
+                confirmModal.classList.add('hidden');
+                okBtn.removeEventListener('click', okListener);
+                cancelBtn.removeEventListener('click', cancelListener);
+            }
+
+            okBtn.addEventListener('click', okListener, { once: true });
+            cancelBtn.addEventListener('click', cancelListener, { once: true });
+        }
+    </script>
+</body>
+</html>
