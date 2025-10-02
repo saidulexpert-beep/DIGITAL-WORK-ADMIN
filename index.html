@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DIGITAL WORK - Admin Panel</title>
+    <title>Admin Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -37,7 +37,7 @@
 
     <div id="admin-login-view" class="min-h-screen flex items-center justify-center bg-gray-100">
         <div class="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
-            <h1 class="text-3xl font-bold text-center text-gray-900">DIGITAL WORK - Admin Login</h1>
+            <h1 class="text-3xl font-bold text-center text-gray-900">Admin Login522</h1>
             <input id="admin-email" type="email" placeholder="Admin Email" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
             <input id="admin-password" type="password" placeholder="Password" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
             <button id="admin-login-btn" class="w-full btn btn-primary">Login</button>
@@ -56,7 +56,6 @@
                     <a href="#" class="nav-link block py-3 px-4" data-page="withdrawals-page"><i data-lucide="arrow-up-circle" class="inline-block w-5 h-5 mr-2"></i>Withdrawals</a>
                     <a href="#" class="nav-link block py-3 px-4" data-page="sell-requests-page"><i data-lucide="tag" class="inline-block w-5 h-5 mr-2"></i>Sell Requests</a>
                     <a href="#" class="nav-link block py-3 px-4" data-page="tasks-page"><i data-lucide="list-checks" class="inline-block w-5 h-5 mr-2"></i>Tasks</a>
-                    <a href="#" class="nav-link block py-3 px-4" data-page="mail-stock-page"><i data-lucide="mail" class="inline-block w-5 h-5 mr-2"></i>Mail Stock</a>
                     <a href="#" class="nav-link block py-3 px-4" data-page="updates-page"><i data-lucide="megaphone" class="inline-block w-5 h-5 mr-2"></i>Manage Updates</a>
                     <a href="#" class="nav-link block py-3 px-4" data-page="settings-page"><i data-lucide="settings" class="inline-block w-5 h-5 mr-2"></i>Settings</a>
                     <a href="#" id="admin-logout-btn" class="block py-3 px-4 mt-8 text-red-400 hover:bg-red-500 hover:text-white"><i data-lucide="log-out" class="inline-block w-5 h-5 mr-2"></i>Logout</a>
@@ -298,24 +297,6 @@
                                     </div>
                                 </div>
                             </div>
-
-                            <div class="stat-card p-6">
-                                <h2 class="text-xl font-bold mb-4">Mail Purchase Settings</h2>
-                                <div id="mail-settings-container"></div>
-                            </div>
-                             <div class="stat-card p-6 space-y-4 h-fit">
-                                 <h2 class="text-xl font-bold">Add New Mail Type</h2>
-                                 <div>
-                                    <label class="block font-semibold mb-1">Mail Type Name</label>
-                                    <input type="text" id="new-mail-type-name" class="w-full px-4 py-2 border rounded-lg" placeholder="e.g., Yahoo Mail">
-                                 </div>
-                                 <div>
-                                    <label class="block font-semibold mb-1">Stock Key (Unique ID)</label>
-                                    <input type="text" id="new-mail-stock-key" class="w-full px-4 py-2 border rounded-lg" placeholder="e.g., yahoo_stock">
-                                    <p class="text-xs text-gray-500 mt-1">No spaces. This is the collection name in DB.</p>
-                                 </div>
-                                 <button id="add-new-mail-type-btn" class="btn btn-success w-full">Add Mail Type</button>
-                            </div>
                         </div>
 
                         <div class="stat-card p-6">
@@ -454,7 +435,7 @@ const firebaseConfig = {
 };
         
         // IMPORTANT: Replace with your actual Firebase Admin User UID(s)
-        const ADMIN_UIDS = ["iDlOCZAQS8Tg10bNw2ygIaCnEH82"];
+        const ADMIN_UIDS = ["6RiygICzS8QkwzqoHrQ2wUNuNpn1"];
 
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
@@ -493,6 +474,7 @@ const firebaseConfig = {
         async function fetchAppConfig() {
             const configRef = doc(db, "config", "main");
             const docSnap = await getDoc(configRef);
+            // Ensure appConfig.mails is still initialized for mail-stock-page to function
             appConfig = docSnap.exists() ? docSnap.data() : { mails: [], sellableItems: [], activationFee: 50, referralBonus: 10 };
             if (!appConfig.mails) appConfig.mails = [];
             if (!appConfig.sellableItems) appConfig.sellableItems = [];
@@ -550,7 +532,7 @@ const firebaseConfig = {
             document.getElementById('update-form').addEventListener('submit', handleUpdateSubmit);
             document.getElementById('update-cancel-btn').addEventListener('click', resetUpdateForm);
             document.getElementById('save-all-settings-btn').addEventListener('click', saveAllSettings);
-            document.getElementById('add-new-mail-type-btn').addEventListener('click', handleAddNewMailType);
+            // Removed: document.getElementById('add-new-mail-type-btn').addEventListener('click', handleAddNewMailType);
             document.getElementById('add-sellable-item-btn').addEventListener('click', () => openSellItemModal());
             document.getElementById('sell-item-modal-cancel').addEventListener('click', () => document.getElementById('sell-item-modal').classList.add('hidden'));
             document.getElementById('sell-item-form').addEventListener('submit', handleSellItemFormSubmit);
@@ -1306,35 +1288,12 @@ const firebaseConfig = {
             await fetchAppConfig();
             document.getElementById('activation-fee').value = appConfig.activationFee || 50;
             document.getElementById('referral-bonus').value = appConfig.referralBonus || 10;
-            renderMailSettings();
+            // Removed: renderMailSettings();
             renderSellableItems();
             lucide.createIcons();
         }
         
-        function renderMailSettings() {
-            const container = document.getElementById('mail-settings-container');
-            container.innerHTML = '';
-            (appConfig.mails || []).forEach(mail => {
-                container.innerHTML += `
-                <div class="p-4 border rounded-lg mb-4 bg-gray-50 mail-setting-item" data-stock-key="${mail.stockKey}">
-                    <div class="flex justify-between items-center mb-3">
-                        <h3 class="text-lg font-bold">${mail.type}</h3>
-                        <button class="btn btn-danger p-2" onclick="window.deleteMailType('${mail.stockKey}')"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                    </div>
-                    <div class="space-y-3">
-                         <div>
-                            <label class="block font-semibold text-sm mb-1">Price (BDT)</label>
-                            <input type="number" class="w-full p-2 border rounded-md" value="${mail.priceBdt || 0}" data-field="priceBdt">
-                        </div>
-                        <div>
-                            <label class="block font-semibold text-sm mb-1">Logo URL</label>
-                            <input type="text" class="w-full p-2 border rounded-md" value="${mail.logoUrl || ''}" data-field="logoUrl" placeholder="https://example.com/logo.png">
-                        </div>
-                    </div>
-                </div>`;
-            });
-            lucide.createIcons();
-        }
+        // Removed: function renderMailSettings() { ... }
 
         function renderSellableItems() {
             const container = document.getElementById('sellable-items-container');
@@ -1359,26 +1318,8 @@ const firebaseConfig = {
             lucide.createIcons();
         }
 
-        async function handleAddNewMailType() {
-            const typeName = document.getElementById('new-mail-type-name').value.trim();
-            const stockKey = document.getElementById('new-mail-stock-key').value.trim();
-            if (!typeName || !stockKey || /\s/.test(stockKey)) return showAlert("Please fill all fields correctly. Stock Key cannot have spaces.");
-            if (appConfig.mails.some(m => m.stockKey === stockKey || m.type === typeName)) return showAlert(`A mail type with this name or stock key already exists.`);
-            
-            appConfig.mails.push({ type: typeName, stockKey, priceBdt: 0, logoUrl: '' });
-            renderMailSettings();
-            showAlert("New mail type added. Don't forget to Save All Settings.");
-            document.getElementById('new-mail-type-name').value = '';
-            document.getElementById('new-mail-stock-key').value = '';
-        }
-
-        window.deleteMailType = (stockKey) => {
-            showConfirm("Delete this mail type? This cannot be undone.", () => {
-                appConfig.mails = appConfig.mails.filter(m => m.stockKey !== stockKey);
-                renderMailSettings();
-                showAlert("Mail type removed. Don't forget to Save All Settings.");
-            });
-        };
+        // Removed: async function handleAddNewMailType() { ... }
+        // Removed: window.deleteMailType = (stockKey) => { ... };
 
         window.openSellItemModal = (index = null) => {
             const modal = document.getElementById('sell-item-modal');
@@ -1452,18 +1393,7 @@ const firebaseConfig = {
         }
 
         async function saveAllSettings() {
-            const newMailsArray = [];
-            document.querySelectorAll('.mail-setting-item').forEach(item => {
-                const stockKey = item.dataset.stockKey;
-                const originalMail = appConfig.mails.find(m => m.stockKey === stockKey);
-                newMailsArray.push({
-                    stockKey: stockKey,
-                    type: originalMail.type,
-                    priceBdt: parseFloat(item.querySelector('[data-field="priceBdt"]').value) || 0,
-                    logoUrl: item.querySelector('[data-field="logoUrl"]').value.trim()
-                });
-            });
-            appConfig.mails = newMailsArray;
+            // No longer processing appConfig.mails here, as mail type settings are removed.
             
             // Save general settings
             appConfig.activationFee = parseFloat(document.getElementById('activation-fee').value) || 50;
@@ -1473,7 +1403,13 @@ const firebaseConfig = {
                 if (!Array.isArray(appConfig.sellableItems)) {
                     appConfig.sellableItems = [];
                 }
-                await setDoc(doc(db, "config", "main"), appConfig);
+                // Only save general settings and sellableItems
+                await setDoc(doc(db, "config", "main"), {
+                    activationFee: appConfig.activationFee,
+                    referralBonus: appConfig.referralBonus,
+                    sellableItems: appConfig.sellableItems,
+                    mails: appConfig.mails // Ensure mails array, though not managed here, is still saved for mail stock page
+                });
                 showAlert("All settings have been saved successfully!");
                 loadSettings();
             } catch (error) {
